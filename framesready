@@ -1,0 +1,56 @@
+from tkinter import *
+from tkinter import ttk
+import mysql.connector as db
+connection=db.connect(user='ram',host='localhost',password='1234567',database='krish')
+cur=connection.cursor()
+
+root=Tk()
+root.title('Krish Natyalaya')
+root.geometry('1280x720')
+
+#6frames
+menuframe=LabelFrame(root,height=31,width=1820)
+studentdetailsframe=LabelFrame(root,height=500,width=400)
+studenttree=LabelFrame(root,height=600,width=500)
+feeframe=LabelFrame(root,height=500,width=400)
+feetree=LabelFrame(root,height=600,width=500)
+
+def exitfromstudent():
+	menuframe.place(x=0,y=0)
+	studentdetailsframe.place(x=1000,y=1000)
+	studenttree.place(x=1000,y=1000)
+	exitbuttonforstudentscreen.place(x=1000,y=1000)
+
+exitbuttonforstudentscreen=Button(root,text='Exit',font=('Ubuntu',15),command=exitfromstudent,fg='white',bg='red')
+	
+#function to open the student screen
+def openstudentscreen():
+	root.title('STUDENT REGISTER')
+	menuframe.place(x=1000,y=1000)
+	studentdetailsframe.place(x=100,y=100)
+	studenttree.place(x=750,y=60)
+	exitbuttonforstudentscreen.place(x=500,y=650)
+#function to exit from fee frame
+def exitfromfee():
+	menuframe.place(x=0,y=0)
+	feeframe.place(x=1000,y=1000)
+	feetree.place(x=1000,y=1000)
+	exitbuttonforfeescreen.place(x=1000,y=1000)
+	
+#function to open fee screen
+def openfeescreen():
+	root.title('FEE REGISTER')
+	menuframe.place(x=1000,y=1000)
+	feeframe.place(x=100,y=100)
+	feetree.place(x=750,y=60)
+	exitbuttonforfeescreen.place(x=500,y=650)
+	
+#menuframe
+menuframe.place(x=0,y=0)
+studentdetails=Button(menuframe,text='StudentRegister',font=('Bold',9),command=openstudentscreen)
+feedetails=Button(menuframe,text='FeeRegister',font=('Bold',9),command=openfeescreen)
+studentdetails.place(x=0,y=0)
+feedetails.place(x=122,y=0)
+exitbuttonforfeescreen=Button(root,text='Exit',font=('Ubuntu',15),command=exitfromfee,fg='white',bg='red')
+
+root.mainloop()
