@@ -16,12 +16,46 @@ root.geometry('1280x720')
 menuframe=LabelFrame(root,height=31,width=1820)
 studentdetailsframe=LabelFrame(root,height=300,width=400)
 studenttree=LabelFrame(root,height=600,width=500)
-feeframe=LabelFrame(root,height=500,width=400)
-feetree=LabelFrame(root,height=600,width=500)
+feetree=LabelFrame(root,height=600,width=1200)
 
+def resetstudenttree():
+	records=studenttreeview.get_children()
+	for row in records:
+		studenttreeview.delete(row)
+	cur.execute('select * from students order by batch,name;')
+	dataset=cur.fetchall()
+	counter=0
+	for sno,name,batch,fee in dataset:
+		studenttreeview.insert(parent='',index='end',iid=counter,values=(counter+1,name,batch))
+		counter+=1
+		
+def resetfeetree():
+	records=feetreeview.get_children()
+	for row in records:
+		feetreeview.delete(row)
+	cur.execute('select * from students order by batch,name;')
+	dataset=cur.fetchall()
+	counter=0
+	for sno,name,batch,fee in dataset:
+		feetreeview.insert(parent='',index='end',iid=counter,values=(counter+1,name,batch,fee))
+		counter+=1
+		
+def resetbackend():
+    cur.execute('select * from students;')
+    records=cur.fetchall()
+    counter=1
+    cur.execute('truncate students;')
+    connection.commit()
+    for sno,name,batch,fee in records:
+        data=[counter,name,batch,fee]
+        sql = 'insert into students (sno,name,batch,fee)values({},"{}",{},"{}");'.format(counter,name,batch,fee)
+        counter+=1
+        cur.execute(sql)
+        connection.commit()
+		
 def exitfromstudent():
 	menuframe.place(x=0,y=0)
-	studentdetailsframe.place(x=1000,y=1000)
+	studentdetailsframe.place(x=2000,y=2000)
 	studenttree.place(x=1000,y=1000)
 	exitbuttonforstudentscreen.place(x=1000,y=1000)
 
@@ -32,7 +66,9 @@ def studentsdetailstobackend():
 	Name=getnameentry.get()
 	Batch=getbatchentry.get()
 	matched=0
-	for sno,name,batch in dataset:
+	cur.execute('select * from students;')
+	result=cur.fetchall()
+	for sno,name,batch,fee in result:
 		if Name == name:
 			getnameentry.delete(0,END)
 			getbatchentry.delete(0, END)
@@ -43,55 +79,65 @@ def studentsdetailstobackend():
 		connection.commit()
 		getnameentry.delete(0, END)
 		getbatchentry.delete(0, END)
-		studenttreeview.insert(parent='',index='end',iid=len(dataset),values=(len(dataset)+1,Name,Batch))
+		resetbackend()
+		resetstudenttree()
+        
 #updating records in students details treeview
 def studentsdetailsupdate():
-	selected=studenttreeview.focus()
-	dataitems=studenttreeview.item(selected,'values')
-	confirmation=messagebox.askyesno('Are you sure?','Do you want to make changes in the existing data?')
+	check=dataitems[1]
+	Name=getnameentry.get()
+	Batch=getbatchentry.get()
+	confirmation=messagebox.askyesno('Are you sure?','Do you want to make changes?')
 	if confirmation:
-		dataitems=studenttreeview.item(selected,values=(dataitems[0],getnameentry.get(),getbatchentry.get()))
-		getnameentry.delete(0, END)
-		getbatchentry.delete(0, END)
-
-def studentsdetailsdelete():
-	selected=studenttreeview.focus()
-	dataitems=studenttreeview.item(selected,'values')
-	word=dataitems[0]
-	sql = 'delete from students where sno = {};'.format(word)
-	cur.execute(sql)
-	connection.commit()
-	alldata=studenttreeview.get_children()
-	for rows in alldata:
-		studenttreeview.delete(rows)
-	serialnumber=1
-	properdata=[]
-	for sno,name,batch,fee in dataset: 
-		mylist=[serialnumber,name,batch,fee]
-		properdata.append(mylist)
-		mytree.insert(parent='',index='end',iid=serialnumber-1,values=(serialnumber,name,batch))
-	cur.execute('truncate students;')
-	connection.commit()
-	track=0
-	for sno,name,batch,fee in properdata:
-		sql = 'insert into students values({},"{}",{},{});'.format(sno,name,batch,fee)
+		sql='update students set name="{}" where name ="{}";'.format(Name,dataitems[1])
 		cur.execute(sql)
 		connection.commit()
-		studenttreeview.insert(parent='',index='end',iid=track,values=(sno,name,batch))
-	getnameentry.delete(0, END)
-	getbatchentry.delete(0, END)
+		sql='update students set batch = {} where name = "{}";'.format(Batch,Name)
+		cur.execute(sql)
+		connection.commit()
+		resetstudenttree()
+		getnameentry.delete(0, END)
+		getbatchentry.delete(0, END)
+		submitbutton1.place(x=123,y=180)
+		updatebutton1.place(x=1000,y=1000)
+		deletebutton1.place(x=1000,y=1000)
+
+def studentsdetailsdelete():
+    confirmation=messagebox.askyesno('Are you sure?','Do you really want to delete this data?')
+    if confirmation:
+        number=0
+        cur.execute('select * from students;')
+        result=cur.fetchall()
+        for sno,name,batch,fee in result:
+            if name==getnameentry.get():
+                number=sno
+        sql = 'delete from students where sno = {};'.format(number)
+        cur.execute(sql)
+        connection.commit()
+        resetbackend()
+        resetstudenttree()
+        getnameentry.delete(0, END)
+        getbatchentry.delete(0, END)
+        updatebutton1.place(x=1000,y=1000)
+        deletebutton1.place(x=1000,y=1000)
+        submitbutton1.place(x=123,y=180)
+        
 def doubleclickedstudents(e):
-	selected=studenttreeview.focus()
-	dataitems=studenttreeview.item(selected,'values')
-	getnameentry.delete(0, END)
-	getnameentry.insert(0, dataitems[1])
-	getbatchentry.delete(0, END)
-	getbatchentry.insert(0, dataitems[2])
-	submitbutton1.place(x=1000,y=1000)
-	updatebutton1=Button(studentdetailsframe,text='Update',font=('Ubuntu',15),fg='white',bg='blue',command=studentsdetailsupdate)
-	updatebutton1.place(x=113,y=180)
-	deletebutton1=Button(studentdetailsframe,text='Delete',font=('Ubuntu',15),fg='white',bg='red',command=studentsdetailsdelete)
-	deletebutton1.place(x=230,y=180)
+	if len(dataset)>=1:
+		selected=studenttreeview.focus()
+		global dataitems
+		dataitems=studenttreeview.item(selected,'values')
+		getnameentry.delete(0, END)
+		getnameentry.insert(0, dataitems[1])
+		getbatchentry.delete(0, END)
+		getbatchentry.insert(0, dataitems[2])
+		submitbutton1.place(x=1000,y=1000)
+		global updatebutton1
+		updatebutton1=Button(studentdetailsframe,text='Update',font=('Ubuntu',15),fg='white',bg='blue',command=studentsdetailsupdate)
+		updatebutton1.place(x=113,y=180)
+		global deletebutton1
+		deletebutton1=Button(studentdetailsframe,text='Delete',font=('Ubuntu',15),fg='white',bg='red',command=studentsdetailsdelete)
+		deletebutton1.place(x=230,y=180)
 
 #function to open the student screen
 def openstudentscreen():
@@ -126,31 +172,85 @@ def openstudentscreen():
 	studenttreeview.heading('Name',text='Name')
 	studenttreeview.heading('Batch',text='Batch')
 	studenttreeview.bind('<Double-1>',doubleclickedstudents)
+	studenttreeview.pack(side='left',fill='y')
+	studentscroll=ttk.Scrollbar(studenttree,orient='vertical',command=studenttreeview.yview)
+	studentscroll.pack(side='left',fill='y')
 	counter=0
-	for sno,name,batch,fee in dataset:
-		studenttreeview.insert(parent='',iid=counter,index='end',values=(counter+1,name,batch))
-	studenttreeview.place(x=0,y=0)
-#function to exit from fee frame
+	cur.execute('select * from students order by batch,name')
+	result=cur.fetchall()
+	for sno,name,batch,fee in result:
+		studenttreeview.insert(parent='',index='end',iid=counter,values=(counter+1,name,batch))
+		counter+=1
+
 def exitfromfee():
 	menuframe.place(x=0,y=0)
-	feeframe.place(x=1000,y=1000)
 	feetree.place(x=1000,y=1000)
 	exitbuttonforfeescreen.place(x=1000,y=1000)
-	
+
+def feedetailstobackend():
+    value=nameentry.get()
+    if value!='':
+            sql='update students set fee="{}" where name="{}";'.format(value,dataitem[1])
+            cur.execute(sql)
+            connection.commit()
+            resetfeetree()
+            nameentry.delete(0, END)
+            root2.destroy()
+    if value=='':
+        nameentry.delete(0, END)
+        
+def doubleclickedfee(x):
+    name=feetreeview.focus()
+    global dataitem
+    dataitem=feetreeview.item(name,'values')
+    global root2
+    root2=Tk()
+    root2.geometry('300x170+500+300')
+    root2.title(dataitem[1])
+    name=Label(root2,text='Fee',font=('Ubuntu',13))
+    name.place(x=10,y=50)
+    global nameentry
+    nameentry=Entry(root2,font=('Ubuntu',13))
+    nameentry.place(x=70,y=50)
+    nameentry.focus_set()
+    update=Button(root2,text='Register',font=('Ubuntu',13),bg='blue',fg='white',command=feedetailstobackend)
+    update.place(x=90,y=100)
+    root2.mainloop()
+
 #function to open fee screen
 def openfeescreen():
 	root.title('FEE REGISTER')
 	menuframe.place(x=1000,y=1000)
-	feeframe.place(x=100,y=100)
-	feetree.place(x=750,y=60)
-	exitbuttonforfeescreen.place(x=500,y=650)
-	
+	feetree.place(x=50,y=40)
+	exitbuttonforfeescreen.place(x=500,y=670)
+	global feetreeview
+	feetreeview=ttk.Treeview(feetree,columns=['Sno','Name','Batch','Fee'],height=30)
+	feetreeview.column('#0',width=0,stretch=NO,anchor='center')
+	feetreeview.column('Sno',width=300,stretch=NO)
+	feetreeview.column('Name',width=300,stretch=NO)
+	feetreeview.column('Batch',width=300,stretch=NO)
+	feetreeview.column('Fee',width=280,stretch=NO)
+	feetreeview.heading('#0',text='')
+	feetreeview.heading('Sno',text='Sno')
+	feetreeview.heading('Name',text='Name')
+	feetreeview.heading('Batch',text='Batch')
+	feetreeview.heading('Fee',text='Fee')
+	feetreeview.pack(side='left',fill='y')
+	feescroll=ttk.Scrollbar(feetree,orient='vertical',command=feetreeview.yview)
+	feescroll.pack(side='left',fill='y')
+	feetreeview.bind('<Double-1>',doubleclickedfee)
+	counter=0
+	cur.execute('select * from students order by batch,name')
+	result=cur.fetchall()
+	for sno,name,batch,fee in result:
+		feetreeview.insert(parent='',index='end',iid=counter,values=(counter+1,name,batch,fee))
+		counter+=1
 #menuframe
 menuframe.place(x=0,y=0)
 studentdetails=Button(menuframe,text='StudentRegister',font=('Bold',9),command=openstudentscreen)
 feedetails=Button(menuframe,text='FeeRegister',font=('Bold',9),command=openfeescreen)
-studentdetails.place(x=0,y=0)
-feedetails.place(x=122,y=0)
+studentdetails.pack(sid='left')
+feedetails.pack(sid='left')
 exitbuttonforfeescreen=Button(root,text='Exit',font=('Ubuntu',15),command=exitfromfee,fg='white',bg='red')
 
 root.mainloop()
